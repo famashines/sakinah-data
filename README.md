@@ -1,27 +1,32 @@
 # sakinah-data
 
-Data files for the Sakinah prayer app. The app downloads them on demand through jsDelivr,
-pinned to a tag, so a file under a tag never changes. A data fix is a new tag.
+Data files for the Sakinah prayer app. The app downloads them on demand from the release
+assets of this repository. A release is immutable once the app points at it; a data fix is
+a new release.
 
 ```
-https://cdn.jsdelivr.net/gh/famashines/sakinah-data@hadith-v1/hadith/<book>/<chapter>.json
+https://github.com/famashines/sakinah-data/releases/download/hadith-v2/<book>.db
 ```
 
-## hadith/
+## Hadith databases
 
-One directory per book (`bukhari`, `muslim`, `abudawud`, `tirmidhi`, `nasai`, `ibnmajah`),
-one JSON file per chapter, named by the sunnah.com section number. A file is an array of
-rows:
+One SQLite file per book (`bukhari`, `muslim`, `abudawud`, `tirmidhi`, `nasai`,
+`ibnmajah`), attached to the `hadith-v<version>` release. Each file holds:
 
 ```
-[number, "arabic", "english", "urdu", "grades"]
+meta(key, value)                       version, book, built
+hadith(id, position, number, chapter, ordinal, arabic, english, urdu, grades)
+search USING fts5(arabic, english, urdu, content='', tokenize='unicode61 remove_diacritics 2')
 ```
 
-`number` is the sunnah.com hadith number. `grades` is empty for Bukhari and Muslim and
-`"Grader: Grade | Grader: Grade"` for the four Sunan. An empty translation means the source
-has none for that row.
+`number` is the sunnah.com hadith number. `position` is the reading order across the
+book, `chapter` the sunnah.com section number, `ordinal` the row's place in that chapter.
+`grades` is empty for Bukhari and Muslim and `"Grader: Grade | Grader: Grade"` for the four
+Sunan. An empty translation means the source has none for that row. The `search` table is
+a contentless FTS5 index; its `arabic` and `urdu` columns are folded (no harakat, alef,
+yeh, heh, and kaf variants unified) and a query must be folded the same way.
 
-The files are written by `scripts/build-hadith.js` in the app repository, from the
+The files are written by `scripts/build-hadith.py` in the app repository, from the
 hadith-api dataset by Fawaz Ahmed (github.com/fawazahmed0/hadith-api), released into the
 public domain under the Unlicense. The Arabic text is the received text of the collections
 and is not under copyright.
